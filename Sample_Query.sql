@@ -27,7 +27,8 @@ SELECT * FROM Payroll_Staging;
 
 --Insert into real table
 INSERT INTO Payroll(EmployeeID,TotalHours,TaxRate,PayDate)
-SELECT EmployeeID,TotalHours,GrossPay,TaxRate,TaxAmount,NetPay,PayDate FROM Payroll_Staging;
+SELECT EmployeeID,TotalHours,GrossPay,TaxRate,TaxAmount,NetPay,PayDate 
+FROM Payroll_Staging;
 
 SELECT * FROM Payroll; 
 
@@ -35,7 +36,8 @@ SELECT * FROM Payroll;
 --Creating view for gross pay to simplify complex queries
 CREATE VIEW GrossPayView AS
 SELECT 
-e.FirstName,e.EmployeeID,e.HourlyWage,SUM(a.HoursWorked) AS TotalHours,(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay 
+e.FirstName,e.EmployeeID,e.HourlyWage,SUM(a.HoursWorked) AS TotalHours,
+(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay 
 FROM Attendance a 
 JOIN Employee e ON a.EmployeeID=e.EmployeeID 
 GROUP BY e.FirstName,e.EmployeeID,e.HourlyWage;
@@ -62,7 +64,7 @@ FROM inserted;
 END;                                     --Temporary table(holds the data user is trying to insert)
 
 --Testing Trigger by inserting row into the Payroll table
-INSERT INTO Payroll(EmployeeID,TaxRate,TotalHours,GrossPay)VALUES (1,10,40,1500);
+INSERT INTO Payroll(EmployeeID,TaxRate,TotalHours,GrossPay) VALUES (1,10,40,1500);
 SELECT * FROM Payroll;                    --NetPay,TaxAmount is automatically created by the trigger
 
 --Stored Procedure
@@ -70,8 +72,13 @@ CREATE PROCEDURE GeneratePayroll
 AS
 BEGIN 
 INSERT INTO Payroll(EmployeeID,TaxRate,TotalHours,GrossPay,TaxAmount,NetPay)
-SELECT a.EmployeeID,10,SUM(ISNULL(a.HoursWorked,0)), SUM(ISNULL(a.HoursWorked,0) * e.HourlyWage),SUM(ISNULL(a.HoursWorked,0) * e.HourlyWage)*0.10,SUM(ISNULL(a.HoursWorked,0) * e.HourlyWage)*0.90
-FROM Employee e LEFT JOIN Attendance a ON e.EmployeeID=a.EmployeeID GROUP BY a.EmployeeID;
+SELECT a.EmployeeID,10,SUM(ISNULL(a.HoursWorked,0)), 
+SUM(ISNULL(a.HoursWorked,0) * e.HourlyWage),
+SUM(ISNULL(a.HoursWorked,0) * e.HourlyWage)*0.10,
+SUM(ISNULL(a.HoursWorked,0) * e.HourlyWage)*0.90
+FROM Employee e
+LEFT JOIN Attendance a ON e.EmployeeID=a.EmployeeID 
+GROUP BY a.EmployeeID;
 END;
 GO
 
