@@ -22,7 +22,7 @@ This system automates payroll calculations including gross pay, tax deductions, 
 ## Database Structure
 
 ### 1. Employees Table
-Stores employee details.
+Stores employee details.<br>
 Columns:<br>
 • EmployeeID (Primary Key)<br>
 • Name<br>
@@ -30,7 +30,7 @@ Columns:<br>
 • HourlyRate<br>
 
 ### 2. Attendance Table
-Stores daily work hours.
+Stores daily work hours.<br>
 Columns:<br>
 • AttendanceID (Primary Key)<br>
 • EmployeeID (Foreign Key)<br>
@@ -38,7 +38,7 @@ Columns:<br>
 • HoursWorked<br>
 
 ### 3. Payroll Table
-Stores salary details.
+Stores salary details.<br>
 Columns:<br>
 • PayrollID (Primary Key)<br>
 • EmployeeID (Foreign Key)<br>
@@ -50,7 +50,7 @@ Columns:<br>
 • PayDate<br>
 
 ### 4.Departments Table
-Stores employee and their corresponding Department details.
+Stores employee and their corresponding Department details.<br>
 Columns:<br>
 • DepartmentID<br>
 • DepartmentName<br>
@@ -88,8 +88,14 @@ Ensures safe execution:<br>
 • ROLLBACK (if error)<br>
 
 ## Sample Queries:
-### Query to show how gross pay is calculated
-SELECT e.FirstName,e.EmployeeID,e.HourlyWage,SUM(a.HoursWorked) AS TotalHours,(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay FROM Attendance a JOIN Employee e ON a.EmployeeID=e.EmployeeID GROUP BY e.FirstName,e.EmployeeID,e.HourlyWage;
+### 1.Query to calculate gross pay
+### Gross Pay = Hours Worked × Hourly Wage
+SELECT e.FirstName,e.EmployeeID,e.HourlyWage,<br>
+SUM(a.HoursWorked) AS TotalHours,<br>
+(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay <br>
+FROM Attendance a <br>
+JOIN Employee e ON a.EmployeeID=e.EmployeeID <br>
+GROUP BY e.FirstName,e.EmployeeID,e.HourlyWage;<br>
 GO
 
 ### Output:
@@ -106,9 +112,16 @@ GO
 |Siddharth	|9	|55.00	|55.00	|3025.0000|
 |Mia	|10	|32.00	|46.00	|1472.0000|
 
-## Tax Calculations
+### Tax Calculations
+### 2.Query to calculate Tax Amount
 ### TaxAmount= GrossPay * TaxRate /100
-SELECT a.EmployeeID,p.TaxRate,e.HourlyWage,SUM(a.HoursWorked) AS TotalHours,(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay,(((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100 AS TaxAmount FROM Attendance a JOIN Employee e ON a.EmployeeID=e.EmployeeID JOIN Payroll p ON e.EmployeeID=p.EmployeeID GROUP BY a.EmployeeID,p.TaxRate,e.HourlyWage ;
+SELECT a.EmployeeID,p.TaxRate,e.HourlyWage,SUM(a.HoursWorked) AS TotalHours,<br>
+(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay,<br>
+(((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100 AS TaxAmount <br>
+FROM Attendance a <br>
+JOIN Employee e ON a.EmployeeID=e.EmployeeID <br>
+JOIN Payroll p ON e.EmployeeID=p.EmployeeID<br>
+GROUP BY a.EmployeeID,p.TaxRate,e.HourlyWage ;<br>
 GO
 
 ### Output:
@@ -125,9 +138,16 @@ GO
 |9	|10	|55.00	|165.00	|9075.0000	|907.500000|
 |10	|10	|32.00	|138.00	|4416.0000	|441.600000|
 
-## Query to calculate Net Pay
+### 3.Query to calculate Net Pay
 ### Net pay=(Grosspay - TaxAmount)
-SELECT a.EmployeeID,p.TaxRate,e.HourlyWage,(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay,(((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100 AS TaxAmount, (((SUM(a.HoursWorked))*e.HourlyWage))-((((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100) AS NetPay FROM Attendance a JOIN Employee e ON a.EmployeeID=e.EmployeeID JOIN Payroll p ON e.EmployeeID=p.EmployeeID GROUP BY a.EmployeeID,p.TaxRate,e.HourlyWage ;
+SELECT a.EmployeeID,p.TaxRate,e.HourlyWage,<br>
+(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay,<br>
+(((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100 AS TaxAmount,<br> 
+(((SUM(a.HoursWorked))*e.HourlyWage))-((((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100) AS NetPay<br>
+FROM Attendance a <br>
+JOIN Employee e ON a.EmployeeID=e.EmployeeID <br>
+JOIN Payroll p ON e.EmployeeID=p.EmployeeID <br>
+GROUP BY a.EmployeeID,p.TaxRate,e.HourlyWage;<br>
 GO
 
 ### Output:
@@ -144,14 +164,16 @@ GO
 |9	|10	|55.00	|9075.0000|	907.500000	|8167.5000|
 |10	|10	|32.00	|4416.0000	|441.600000	|3974.4000|
 
-## Windows Functions
-### Top 1 Employee per department
-SELECT * FROM(
-SELECT e.FirstName,e.LastName,d.DepartmentName, p.NetPay,
-ROW_NUMBER() OVER(PARTITION BY d.DepartmentName ORDER BY p.NetPay DESC) AS SalaryRank
-FROM Employee e JOIN Payroll p ON e.EmployeeID=p.EmployeeID JOIN Departments d  ON e.DepartmentID=d.DepartmentID
-) t
-WHERE SalaryRank <= 1;
+### Windows Functions
+### 4.Query to find the Top 1 Employee per department
+SELECT * FROM (<br>
+SELECT e.FirstName,e.LastName,d.DepartmentName, p.NetPay,<br>
+ROW_NUMBER() OVER(PARTITION BY d.DepartmentName <br>
+ORDER BY p.NetPay DESC) AS SalaryRank<br>
+FROM Employee e JOIN Payroll p ON e.EmployeeID=p.EmployeeID <br>
+JOIN Departments d  ON e.DepartmentID=d.DepartmentID<br>
+) t<br>
+WHERE SalaryRank <= 1;<br>
 GO   
 
 ### Output:
@@ -163,10 +185,16 @@ GO
 |Siddharth	|Saravanan|	Operations|	2723	|1|
 |Isabella	|Thomas|	Sales|	1307|	1|
 
-### To find the Highest Paid Employee in the company(Both these queries provide same result)
-SELECT EmployeeID,FirstName,LastName,NetPay FROM NetView1 WHERE NetPay = (SELECT MAX(NetPay) FROM NetView1);
-GO
-SELECT TOP 1 EmployeeID,FirstName,LastName, MAX(NetPay) AS HighestPaidEmployee FROM NetView1 GROUP BY EmployeeID,FirstName,LastName ORDER BY MAX(NetPay) DESC;
+### 5.Query to find the Highest Paid Employee in the company(Both these queries provide same result)
+SELECT EmployeeID,FirstName,LastName,NetPay <br>
+FROM NetView1 <br>
+WHERE NetPay = (SELECT MAX(NetPay) <br>
+FROM NetView1);<br>
+GO<br>
+SELECT TOP 1 EmployeeID,FirstName,LastName, MAX(NetPay) AS HighestPaidEmployee <br>
+FROM NetView1 <br>
+GROUP BY EmployeeID,FirstName,LastName<br>
+ORDER BY MAX(NetPay) DESC;<br>
 GO
 
 ### Output:
@@ -174,13 +202,12 @@ GO
 |-----------|-----------|-------------|----------------|
 |9|	Siddharth|	Saravanan|	12870.0000|
 
-## PayRoll Transaction
+### 6.PayRoll Transaction
 BEGIN TRANSACTION;<br>
 BEGIN TRY<br>
 --Insert Calculated Salary<br>
 INSERT INTO Payroll(EmployeeID,TaxRate,TotalHours,GrossPay,TaxAmount,NetPay,PayDate)<br>
-SELECT <br>
-e.EmployeeID,10,SUM(a.HoursWorked),<br>
+SELECT e.EmployeeID,10,SUM(a.HoursWorked),<br>
 SUM(a.HoursWorked*e.HourlyWage),<br>
 SUM(a.HoursWorked*e.HourlyWage)*0.10,<br>
 SUM(a.HoursWorked*e.HourlyWage)*0.90,<br>
