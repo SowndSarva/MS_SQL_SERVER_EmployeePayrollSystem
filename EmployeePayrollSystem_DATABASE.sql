@@ -100,7 +100,8 @@ GO
 
 --Insert into real table
 INSERT INTO Payroll(EmployeeID,TotalHours,TaxRate,PayDate)
-SELECT EmployeeID,TotalHours,GrossPay,TaxRate,TaxAmount,NetPay,PayDate FROM Payroll_Staging;
+SELECT EmployeeID,TotalHours,GrossPay,TaxRate,TaxAmount,NetPay,PayDate 
+FROM Payroll_Staging;
 GO
 
 SELECT * FROM Payroll; --PayrollID starts with 2 instead of 1 because of an insert fail first time
@@ -110,7 +111,8 @@ GO
 
 --Now add data again into the Payroll table
 INSERT INTO Payroll(EmployeeID,TotalHours,GrossPay,TaxRate,TaxAmount,NetPay,PayDate)
-SELECT EmployeeID,TotalHours,GrossPay,TaxRate,TaxAmount,NetPay,PayDate FROM Payroll_Staging;
+SELECT EmployeeID,TotalHours,GrossPay,TaxRate,TaxAmount,NetPay,PayDate 
+FROM Payroll_Staging;
 GO
 
 SELECT * FROM Payroll; --Now it shows PayrollID 1.
@@ -140,40 +142,68 @@ GO
 
 --Join Queries
 --Query to show employees grouped by department
-SELECT e.EmployeeID,e.FirstName,e.LastName,d.DepartmentName FROM  Employee e JOIN Departments d  ON e.DepartmentID=d.DepartmentID ORDER BY d.DepartmentName;
+SELECT e.EmployeeID,e.FirstName,e.LastName,d.DepartmentName 
+FROM  Employee e JOIN Departments d ON e.DepartmentID=d.DepartmentID 
+ORDER BY d.DepartmentName;
 GO
 
 --Query to show each department with all of its employees combined into one row as a comma-seperated list
-SELECT d.DepartmentName, STRING_AGG(e.FirstName,',') FROM Departments d LEFT JOIN Employee e ON d.DepartmentID=e.DepartmentID GROUP BY d.DepartmentName;
+SELECT d.DepartmentName, STRING_AGG(e.FirstName,',') 
+FROM Departments d 
+LEFT JOIN Employee e ON d.DepartmentID=e.DepartmentID 
+GROUP BY d.DepartmentName;
 GO
 
 --Query to show employees and their payroll information
-SELECT e.EmployeeID, e.FirstName,e.LastName,p.GrossPay,P.NetPay,P.PayDate FROM Employee e JOIN Payroll p ON e.EmployeeID=p.EmployeeID;
+SELECT e.EmployeeID, e.FirstName,e.LastName,p.GrossPay,P.NetPay,P.PayDate 
+FROM Employee e 
+JOIN Payroll p ON e.EmployeeID=p.EmployeeID;
 GO
 
 --Query to show Full Payroll details
-SELECT e.FirstName,e.LastName,p.TotalHours,p.GrossPay,p.NetPay,p.PayDate FROM Payroll p JOIN Employee e ON p.EmployeeID=e.EmployeeID JOIN Departments d ON e.DepartmentID=d.DepartmentID;
+SELECT e.FirstName,e.LastName,p.TotalHours,p.GrossPay,p.NetPay,p.PayDate 
+FROM Payroll p JOIN Employee e ON p.EmployeeID=e.EmployeeID 
+JOIN Departments d ON e.DepartmentID=d.DepartmentID;
 GO
 
 --Sample queries to show how gross pay is calculated
-SELECT e.FirstName,e.EmployeeID,e.HourlyWage,SUM(a.HoursWorked) AS TotalHours,(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay FROM Attendance a JOIN Employee e ON a.EmployeeID=e.EmployeeID GROUP BY e.FirstName,e.EmployeeID,e.HourlyWage;
+SELECT e.FirstName,e.EmployeeID,e.HourlyWage,
+SUM(a.HoursWorked) AS TotalHours,
+(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay 
+FROM Attendance a 
+JOIN Employee e ON a.EmployeeID=e.EmployeeID 
+GROUP BY e.FirstName,e.EmployeeID,e.HourlyWage;
 GO
 
 --Tax Calculations
 --TaxAmount= GrossPay * TaxRate /100
-SELECT a.EmployeeID,p.TaxRate,e.HourlyWage,SUM(a.HoursWorked) AS TotalHours,(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay,(((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100 AS TaxAmount FROM Attendance a JOIN Employee e ON a.EmployeeID=e.EmployeeID JOIN Payroll p ON e.EmployeeID=p.EmployeeID GROUP BY a.EmployeeID,p.TaxRate,e.HourlyWage ;
+SELECT a.EmployeeID,p.TaxRate,e.HourlyWage,
+SUM(a.HoursWorked) AS TotalHours,
+(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay,
+(((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100 AS TaxAmount 
+FROM Attendance a 
+JOIN Employee e ON a.EmployeeID=e.EmployeeID 
+JOIN Payroll p ON e.EmployeeID=p.EmployeeID 
+GROUP BY a.EmployeeID,p.TaxRate,e.HourlyWage ;
 GO
 
 --Query to calculate Net Pay
 -- Net pay=(Grosspay - TaxAmount)
-SELECT a.EmployeeID,p.TaxRate,e.HourlyWage,(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay,(((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100 AS TaxAmount, (((SUM(a.HoursWorked))*e.HourlyWage))-((((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100) AS NetPay FROM Attendance a JOIN Employee e ON a.EmployeeID=e.EmployeeID JOIN Payroll p ON e.EmployeeID=p.EmployeeID GROUP BY a.EmployeeID,p.TaxRate,e.HourlyWage ;
+SELECT a.EmployeeID,p.TaxRate,e.HourlyWage,
+(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay,
+(((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100 AS TaxAmount, 
+(((SUM(a.HoursWorked))*e.HourlyWage))-((((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100) AS NetPay 
+FROM Attendance a 
+JOIN Employee e ON a.EmployeeID=e.EmployeeID 
+JOIN Payroll p ON e.EmployeeID=p.EmployeeID 
+GROUP BY a.EmployeeID,p.TaxRate,e.HourlyWage ;
 GO
 
 --Views
 --Creating view for gross pay to simplify complex queries
 CREATE VIEW GrossPayView AS
-SELECT 
-e.FirstName,e.EmployeeID,e.HourlyWage,SUM(a.HoursWorked) AS TotalHours,(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay 
+SELECT e.FirstName,e.EmployeeID,e.HourlyWage,SUM(a.HoursWorked) AS TotalHours,
+(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay 
 FROM Attendance a 
 JOIN Employee e ON a.EmployeeID=e.EmployeeID 
 GROUP BY e.FirstName,e.EmployeeID,e.HourlyWage;
@@ -183,7 +213,9 @@ GO
 
 --Create view for TaxAmount
 CREATE VIEW TaxView AS
-SELECT a.EmployeeID,p.TaxRate,e.HourlyWage,SUM(a.HoursWorked) AS TotalHours,(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay,(((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100 AS TaxAmount 
+SELECT a.EmployeeID,p.TaxRate,e.HourlyWage,SUM(a.HoursWorked) AS TotalHours,
+(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay,
+(((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100 AS TaxAmount 
 FROM Attendance a 
 JOIN Employee e ON a.EmployeeID=e.EmployeeID 
 JOIN Payroll p ON e.EmployeeID=p.EmployeeID 
@@ -194,7 +226,10 @@ GO
 
 --Create view for NetPay
 CREATE VIEW NetView AS
-SELECT a.EmployeeID,p.TaxRate,e.HourlyWage,(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay,(((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100 AS TaxAmount, (((SUM(a.HoursWorked))*e.HourlyWage))-((((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100) AS NetPay 
+SELECT a.EmployeeID,p.TaxRate,e.HourlyWage,
+(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay,
+(((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100 AS TaxAmount,
+(((SUM(a.HoursWorked))*e.HourlyWage))-((((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100) AS NetPay 
 FROM Attendance a 
 JOIN Employee e ON a.EmployeeID=e.EmployeeID 
 JOIN Payroll p ON e.EmployeeID=p.EmployeeID 
@@ -202,7 +237,10 @@ GROUP BY a.EmployeeID,p.TaxRate,e.HourlyWage ;
 GO
 
 CREATE VIEW NetView1 AS
-SELECT a.EmployeeID,e.FirstName,e.LastName,p.TaxRate,e.HourlyWage,(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay,(((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100 AS TaxAmount, (((SUM(a.HoursWorked))*e.HourlyWage))-((((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100) AS NetPay 
+SELECT a.EmployeeID,e.FirstName,e.LastName,p.TaxRate,e.HourlyWage,
+(SUM(a.HoursWorked))*e.HourlyWage AS GrossPay,
+(((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100 AS TaxAmount, 
+(((SUM(a.HoursWorked))*e.HourlyWage))-((((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100) AS NetPay 
 FROM Attendance a 
 JOIN Employee e ON a.EmployeeID=e.EmployeeID 
 JOIN Payroll p ON e.EmployeeID=p.EmployeeID 
@@ -220,21 +258,35 @@ SELECT AVG(NetPay) AS AvgSalary FROM NetView;
 GO
 
 --To find the Highest Paid Employee in the company(Both these queries provide same result)
-SELECT EmployeeID,FirstName,LastName,NetPay FROM NetView1 WHERE NetPay = (SELECT MAX(NetPay) FROM NetView1);
+SELECT EmployeeID,FirstName,LastName,NetPay 
+FROM NetView1
+WHERE NetPay = (SELECT MAX(NetPay) FROM NetView1);
 GO
-SELECT TOP 1 EmployeeID,FirstName,LastName, MAX(NetPay) AS HighestPaidEmployee FROM NetView1 GROUP BY EmployeeID,FirstName,LastName ORDER BY MAX(NetPay) DESC;
+SELECT TOP 1 EmployeeID,FirstName,LastName, MAX(NetPay) AS HighestPaidEmployee 
+FROM NetView1 
+GROUP BY EmployeeID,FirstName,LastName 
+ORDER BY MAX(NetPay) DESC;
 GO
 
 --Salary by Department
 CREATE VIEW DepartmentSalaryView AS
-SELECT d.DepartmentName, a.EmployeeID,p.TaxRate,e.HourlyWage,(((SUM(a.HoursWorked))*e.HourlyWage))-((((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100) AS TotalSalary FROM Attendance a JOIN Employee e ON a.EmployeeID=e.EmployeeID
-JOIN Payroll p ON e.EmployeeID=p.EmployeeID JOIN Departments d ON e.DepartmentID=d.DepartmentID GROUP BY a.EmployeeID,p.TaxRate,e.HourlyWage,d. DepartmentName;
+SELECT d.DepartmentName, a.EmployeeID,p.TaxRate,e.HourlyWage,
+(((SUM(a.HoursWorked))*e.HourlyWage))-((((SUM(a.HoursWorked))*e.HourlyWage)*TaxRate )/100) AS TotalSalary 
+FROM Attendance a JOIN Employee e ON a.EmployeeID=e.EmployeeID
+JOIN Payroll p ON e.EmployeeID=p.EmployeeID
+JOIN Departments d ON e.DepartmentID=d.DepartmentID 
+GROUP BY a.EmployeeID,p.TaxRate,e.HourlyWage,d. DepartmentName;
 GO
-SELECT DepartmentName, SUM(TotalSalary) AS TotalSalaryByDepartment FROM DepartmentSalaryView GROUP BY DepartmentName;
+SELECT DepartmentName, SUM(TotalSalary) AS TotalSalaryByDepartment 
+FROM DepartmentSalaryView 
+GROUP BY DepartmentName;
 GO
 
 --Employees with no attendance
-SELECT e.FirstName,e.LastName FROM Employee e LEFT JOIN Attendance a ON e.EmployeeID=a.EmployeeID WHERE a.AttendanceID IS NULL;
+SELECT e.FirstName,e.LastName 
+FROM Employee e 
+LEFT JOIN Attendance a ON e.EmployeeID=a.EmployeeID 
+WHERE a.AttendanceID IS NULL;
 GO
 
 --Rank Employees by Salary
@@ -261,8 +313,12 @@ CREATE PROCEDURE GeneratePayroll
 AS
 BEGIN 
 INSERT INTO Payroll(EmployeeID,TaxRate,TotalHours,GrossPay,TaxAmount,NetPay)
-SELECT a.EmployeeID,10,SUM(ISNULL(a.HoursWorked,0)), SUM(ISNULL(a.HoursWorked,0) * e.HourlyWage),SUM(ISNULL(a.HoursWorked,0) * e.HourlyWage)*0.10,SUM(ISNULL(a.HoursWorked,0) * e.HourlyWage)*0.90
-FROM Employee e LEFT JOIN Attendance a ON e.EmployeeID=a.EmployeeID GROUP BY a.EmployeeID;
+SELECT a.EmployeeID,10,SUM(ISNULL(a.HoursWorked,0)),
+SUM(ISNULL(a.HoursWorked,0) * e.HourlyWage),SUM(ISNULL(a.HoursWorked,0) * e.HourlyWage)*0.10,
+SUM(ISNULL(a.HoursWorked,0) * e.HourlyWage)*0.90
+FROM Employee e 
+LEFT JOIN Attendance a ON e.EmployeeID=a.EmployeeID 
+GROUP BY a.EmployeeID;
 END;
 GO
 
@@ -335,7 +391,8 @@ END;
 GO
 
 --Testing Trigger by inserting row into the Payroll table
-INSERT INTO Payroll(EmployeeID,TaxRate,TotalHours,GrossPay)VALUES (1,10,40,1500);   --NetPay,TaxAmount is automatically created by the trigger
+INSERT INTO Payroll(EmployeeID,TaxRate,TotalHours,GrossPay)
+VALUES (1,10,40,1500);   --NetPay,TaxAmount is automatically created by the trigger
 GO
 SELECT * FROM Payroll; 
 GO                  
@@ -368,7 +425,8 @@ GO
 --Rank Employees By Salary
 SELECT e.FirstName,e.LastName,p.NetPay,
 RANK() OVER (ORDER BY p.NetPay DESC) AS SalaryRank
-FROM Employee e JOIN Payroll p ON e.EmployeeID=p.EmployeeID;
+FROM Employee e 
+JOIN Payroll p ON e.EmployeeID=p.EmployeeID;
 GO   
 
 --Unique Ranking Using ROW_NUMBER()
@@ -381,7 +439,8 @@ GO
 SELECT * FROM (
  SELECT e.FirstName,e.LastName,p.NetPay,
 RANK() OVER (ORDER BY p.NetPay DESC) AS SalaryRank
-FROM Employee e JOIN Payroll p ON e.EmployeeID=p.EmployeeID
+FROM Employee e 
+JOIN Payroll p ON e.EmployeeID=p.EmployeeID
 ) t
 WHERE SalaryRank <= 3;
 GO   
@@ -390,7 +449,9 @@ GO
 SELECT * FROM(
 SELECT e.FirstName,e.LastName,d.DepartmentName, p.NetPay,
 ROW_NUMBER() OVER(PARTITION BY d.DepartmentName ORDER BY p.NetPay DESC) AS SalaryRank
-FROM Employee e JOIN Payroll p ON e.EmployeeID=p.EmployeeID JOIN Departments d  ON e.DepartmentID=d.DepartmentID
+FROM Employee e
+JOIN Payroll p ON e.EmployeeID=p.EmployeeID 
+JOIN Departments d  ON e.DepartmentID=d.DepartmentID
 ) t
 WHERE SalaryRank <= 1;
 GO   
